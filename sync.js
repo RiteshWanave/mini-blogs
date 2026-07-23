@@ -66,6 +66,7 @@ async function main() {
         let hasChanges = false;
 
         // Convert each page to its own markdown file
+        const entries = [];
         for (const page of pages) {
             const title = getPageTitle(page);
             const filename = slugify(title) + ".md";
@@ -75,6 +76,8 @@ async function main() {
             const mdBlocks = await n2m.pageToMarkdown(page.id, 200);
             const md = n2m.toMarkdownString(mdBlocks);
             const content = `# ${title}\n\n${md.parent}`;
+
+            entries.push({ title, filename });
 
             let oldContent = "";
             if (fs.existsSync(filePath)) {
@@ -88,6 +91,25 @@ async function main() {
             } else {
                 console.log(`  No changes: ${filename}`);
             }
+        }
+
+        // Generate README with links to each post
+        const outputDirName = process.env.OUTPUT_DIR || "posts";
+        const readmeLines = [`# Mini Blogs\n`];
+        for (const { title, filename } of entries) {
+            readmeLines.push(`- [${title}](${outputDirName}/${filename})`);
+        }
+        const readmeContent = readmeLines.join("\n") + "\n";
+        const readmePath = path.join(process.env.GITHUB_REPO, "README.md");
+
+        let oldReadme = "";
+        if (fs.existsSync(readmePath)) {
+            oldReadme = fs.readFileSync(readmePath, "utf8");
+        }
+        if (oldReadme !== readmeContent) {
+            fs.writeFileSync(readmePath, readmeContent);
+            hasChanges = true;
+            console.log("README.md updated.");
         }
 
         if (!hasChanges) {
