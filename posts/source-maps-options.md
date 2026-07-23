@@ -1,7 +1,7 @@
 # Source Maps Options
 
 
-# Background s
+# Background
 
 
 ## What are Source Maps?
